@@ -1,4 +1,4 @@
-/* jshint -W033 */
+/* jshint -W033, -W104 */
 
 var CALLBACK_NAME = '__googleApiOnLoadCallback'
 
@@ -19,6 +19,43 @@ module.exports = function (options) {
       window[CALLBACK_NAME] = function () {
         if (timeoutId !== null) {
           clearTimeout(timeoutId)
+        }
+        const gapi = window.gapi
+        // Make authentication here
+        if ('auth' in options) {
+          gapi.load('client:auth2', {
+            callback: function () {
+              let listener = options.auth.listener
+              gapi.client.init(options.auth).then(
+                function () {
+                  if (!gapi.auth2.getAuthInstance()) {
+                    console.error('client:auth2 failed to get auth instance')
+                    return
+                  }
+
+                  // Adding listener
+                  gapi.auth2.getAuthInstance().isSignedIn.listen(listener);
+
+                  let isSignedIn = gapi.auth2.getAuthInstance().isSignedIn.get()
+                  listener(isSignedIn)
+
+                  // Sign in if not yet
+                  if (!isSignedIn) {
+                    gapi.auth2.getAuthInstance().signIn()
+                  }
+                }, function (error) {
+                  console.error('client:auth2', error.details)
+                }
+              )
+            },
+            onerror: function () {
+              console.error('client:auth2 failed to load!')
+            },
+            timeout: options.auth.timeout || 5000,
+            ontimeout: function () {
+              console.error('client:auth2 timeout when loading library')
+            }
+          })
         }
         resolve(window.gapi)
         delete window[CALLBACK_NAME]
