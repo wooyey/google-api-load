@@ -34,7 +34,7 @@ module.exports = function (options) {
                   }
 
                   // Adding listener
-                  gapi.auth2.getAuthInstance().isSignedIn.listen(listener);
+                  gapi.auth2.getAuthInstance().isSignedIn.listen(listener)
 
                   let isSignedIn = gapi.auth2.getAuthInstance().isSignedIn.get()
                   listener(isSignedIn)
